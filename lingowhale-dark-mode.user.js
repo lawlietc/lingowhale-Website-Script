@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LingoWhale Dark Mode
 // @namespace    http://tampermonkey.net/
-// @version      1.2
+// @version      1.1
 // @description  LingoWhale 暗黑模式 - 文章图片保持原色
 // @author       LawlietC
 // @match        https://lingowhale.com/*
