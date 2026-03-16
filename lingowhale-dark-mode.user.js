@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LingoWhale Dark Mode
 // @namespace    http://tampermonkey.net/
-// @version      1.0
+// @version      1.2
 // @description  LingoWhale 暗黑模式 - 文章图片保持原色
 // @author       LawlietC
 // @match        https://lingowhale.com/*
@@ -26,9 +26,15 @@
             color: #e0e0e0 !important;
         }
 
-        /* 覆盖所有边框颜色 - 针对Tailwind常见边框 */
+        /* 覆盖所有边框颜色 - 去掉边框 */
         *, *::before, *::after {
-            border-color: #404040 !important;
+            border-color: transparent !important;
+            border: none !important;
+        }
+
+        /* 保留特定边框样式（如果有的话） */
+        [class*="border-"] {
+            border-color: transparent !important;
         }
 
         /* 覆盖透明背景的文字颜色（暗色文字看不清） */
@@ -260,6 +266,65 @@
         div.h-\[50px\].w-3\/5.absolute.left-8.bottom-0.z-20,
         div.w-full.h-\[100px\].fixed.bottom-0 {
             display: none !important;
+        }
+
+        /* 今日更新列表背景 */
+        ul.space-y-4 > div, ul.space-y-4 > div > div {
+            background-color: #2d2d2d !important;
+        }
+
+        /* 列表项背景 */
+        ul.space-y-4 > div > div.flex.p-2 {
+            background-color: #2d2d2d !important;
+        }
+
+        /* 今日更新列表中的具体项 */
+        #subscription-content ul li div.w-full.p-1.overflow-hidden,
+        #subscription-content ul div.w-full.p-1.overflow-hidden {
+            background-color: #2d2d2d !important;
+        }
+
+        /* 列表项内部元素 */
+        #subscription-content > div > main > div > div > div.relative.flex.grow.w-full > main > div.w-3\/5.flex.flex-col.flex-1.justify-between > ul > div:nth-child(1) > div:nth-child(6) > div.w-full.p-1.overflow-hidden > div,
+        #subscription-content ul > div > div.w-full.p-1.overflow-hidden > div {
+            background-color: transparent !important;
+        }
+
+        /* 列表项标题和时间文字 */
+        #subscription-content div.text-neutral-7,
+        .text-neutral-7 {
+            color: #e0e0e0 !important;
+        }
+
+        #subscription-content div.text-neutral-400,
+        .text-neutral-400 {
+            color: #a0a0a0 !important;
+        }
+
+        /* 订阅内容区域背景 */
+        div.flex-1.w-full.flex.flex-col.min-w-\[780px\].bg-white {
+            background-color: #1a1a1a !important;
+        }
+
+        /* 列表项背景 */
+        #subscription-content div.w-full.p-1.overflow-hidden,
+        div.w-full.p-1.overflow-hidden {
+            background-color: #2d2d2d !important;
+        }
+
+        /* 列表项标题 */
+        div.text-neutral-7 {
+            color: #e0e0e0 !important;
+        }
+
+        /* 列表项时间 */
+        div.text-neutral-400 {
+            color: #a0a0a0 !important;
+        }
+
+        /* 列表项摘要 */
+        div.text-secondary {
+            color: #b0b0b0 !important;
         }
     `;
 
