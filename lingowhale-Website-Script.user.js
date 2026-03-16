@@ -1,16 +1,57 @@
 // ==UserScript==
-// @name         LingoWhale Dark Mode
+// @name         LingoWhale Website Script
 // @namespace    http://tampermonkey.net/
-// @version      1.2
-// @description  LingoWhale 暗黑模式 - 文章图片保持原色
+// @version      1.3
+// @description  LingoWhale 网页脚本 - 暗黑模式 + 自定义标题
 // @author       LawlietC
 // @match        https://lingowhale.com/*
 // @grant        GM_addStyle
+// @grant        GM_registerMenuCommand
+// @grant        GM_getValue
+// @grant        GM_setValue
 // @run-at       document-end
 // ==/UserScript==
 
 (function() {
     'use strict';
+
+    // 功能开关：自定义网页标题（会导致页面刷新一次）
+    const enableCustomTitle = GM_getValue('enableCustomTitle', true);
+
+    // 注册菜单开关
+    GM_registerMenuCommand(
+        (enableCustomTitle ? '✓' : '✗') + ' 网页标题改为文章标题（会导致页面刷新）',
+        function() {
+            const newValue = !GM_getValue('enableCustomTitle', true);
+            GM_setValue('enableCustomTitle', newValue);
+            location.reload();
+        }
+    );
+
+    // 将网页标题设置为特定元素的文字（仅限 reader 页面）
+    function updatePageTitle() {
+        if (!GM_getValue('enableCustomTitle', true)) return;
+        if (!window.location.pathname.startsWith('/reader/')) return;
+        
+        const titleElement = document.querySelector("#dashboard-reader-content > div > div.panel-group-doc-info.relative > div > div.absolute.top-0.left-0.z-\\[1000\\].w-full.px-5.bg-\\[\\#fafafa\\].backdrop-blur-sm > div > div.flex.flex-1.items-center.min-w-0 > div.text-zinc-900.font-semibold.leading-\\[30px\\].text-ellipsis.overflow-hidden.whitespace-nowrap");
+        
+        if (titleElement && titleElement.textContent.trim()) {
+            document.title = titleElement.textContent.trim();
+        }
+    }
+
+    // 页面加载后尝试获取标题
+    function tryUpdateTitle() {
+        updatePageTitle();
+        setTimeout(updatePageTitle, 500);
+        setTimeout(updatePageTitle, 1500);
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', tryUpdateTitle);
+    } else {
+        tryUpdateTitle();
+    }
 
     const darkModeStyles = `
         /* 基础背景和文字颜色 */
