@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LingoWhale Dark Mode
 // @namespace    http://tampermonkey.net/
-// @version      1.3
+// @version      1.2
 // @description  LingoWhale 暗黑模式 - 文章图片保持原色
 // @author       LawlietC
 // @match        https://lingowhale.com/*
@@ -127,7 +127,7 @@
 
         /* 卡片组件 */
         .card, .channel-card, .video-card, .lesson-card, .course-card {
-            background-color: #2d2d2d !important;
+            background-color: #1A1A1A !important;
             color: #e0e0e0 !important;
             border-color: #404040 !important;
         }
@@ -157,6 +157,13 @@
 
         a:hover {
             color: #9ac4f5 !important;
+        }
+
+        /* 下划线样式 */
+        .outline-underline {
+            box-decoration-break: clone !important;
+            -webkit-box-decoration-break: clone !important;
+            background-image: linear-gradient(#24272d, #e3ebfb) !important;
         }
 
         /* 标题 */
@@ -275,13 +282,13 @@
 
         /* 列表项背景 */
         ul.space-y-4 > div > div.flex.p-2 {
-            background-color: #2d2d2d !important;
+            background-color: #1A1A1A !important;
         }
 
         /* 今日更新列表中的具体项 */
         #subscription-content ul li div.w-full.p-1.overflow-hidden,
         #subscription-content ul div.w-full.p-1.overflow-hidden {
-            background-color: #2d2d2d !important;
+            background-color: #1A1A1A !important;
         }
 
         /* 列表项内部元素 */
@@ -308,15 +315,8 @@
 
         /* 列表项背景 */
         #subscription-content div.w-full.p-1.overflow-hidden,
-        div.w-full.p-1.overflow-hidden,
-        .w-full.p-1.overflow-hidden {
-            background-color: #2d2d2d !important;
-        }
-
-        /* 卡片内部flex容器背景 */
-        #subscription-content .flex.justify-between.items-center,
-        #subscription-content .flex.items-center.justify-start.gap-2.min-w-0 {
-            background-color: #2d2d2d !important;
+        div.w-full.p-1.overflow-hidden {
+            background-color: #1A1A1A !important;
         }
 
         /* 列表项标题 */
@@ -382,12 +382,6 @@
         headerElements.forEach(el => {
             el.style.color = '#e0e0e0';
             el.style.backgroundColor = '#1a1a1a';
-        });
-
-        // 强制修复卡片容器背景色
-        const cardContainers = document.querySelectorAll('#subscription-content div.w-full.p-1.overflow-hidden, .flex.justify-between.items-center');
-        cardContainers.forEach(el => {
-            el.style.backgroundColor = '#2d2d2d';
         });
     }
 
