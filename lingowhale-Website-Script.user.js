@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         LingoWhale Website Script
 // @namespace    http://tampermonkey.net/
-// @version      1.3
-// @description  LingoWhale 网页脚本 - 暗黑模式 + 自定义标题
+// @version      1.4
+// @description  LingoWhale 网页脚本 - 暗黑模式 + 自定义标题 + 移除浮动工具栏
 // @author       LawlietC
 // @match        https://lingowhale.com/*
 // @grant        GM_addStyle
@@ -15,8 +15,9 @@
 (function() {
     'use strict';
 
-    // 功能开关：自定义网页标题（会导致页面刷新一次）
+    // 功能开关
     const enableCustomTitle = GM_getValue('enableCustomTitle', true);
+    const enableRemoveToolbar = GM_getValue('enableRemoveToolbar', true);
 
     // 注册菜单开关
     GM_registerMenuCommand(
@@ -25,6 +26,17 @@
             const newValue = !GM_getValue('enableCustomTitle', true);
             GM_setValue('enableCustomTitle', newValue);
             location.reload();
+        }
+    );
+
+    GM_registerMenuCommand(
+        (enableRemoveToolbar ? '✓' : '✗') + ' 移除浮动工具栏并保护右键选区',
+        function() {
+            const newValue = !GM_getValue('enableRemoveToolbar', true);
+            GM_setValue('enableRemoveToolbar', newValue);
+            if (newValue) {
+                initRemoveToolbar();
+            }
         }
     );
 
@@ -495,5 +507,188 @@
         childList: true,
         subtree: true
     });
+
+    // 移除浮动工具栏并保护右键选区
+    function initRemoveToolbar() {
+        if (!GM_getValue('enableRemoveToolbar', true)) return;
+        if (!window.location.pathname.startsWith('/reader/')) return;
+
+        const selectionStore = {
+            top: { range: null, text: '' },
+            iframes: new Map()
+        };
+
+        function removeAllToolbars() {
+            const toolbarSelectors = [
+                '.toolbar',
+                '#toolbar-text',
+                '#translate-btn',
+                '[id*="toolbar"]',
+                '[class*="toolbar"]'
+            ];
+
+            toolbarSelectors.forEach(selector => {
+                try {
+                    document.querySelectorAll(selector).forEach(el => {
+                        if (el.classList.contains('absolute') &&
+                            el.classList.contains('h-8') &&
+                            el.classList.contains('user-select-none')) {
+                            el.remove();
+                        }
+                    });
+                } catch (e) {}
+            });
+
+            document.querySelectorAll('.absolute.h-8.flex-col.user-select-none').forEach(el => {
+                if (el.classList.contains('toolbar')) {
+                    el.remove();
+                }
+            });
+
+            document.querySelectorAll('[class*="toolbar"][class*="absolute"]').forEach(el => {
+                el.remove();
+            });
+        }
+
+        function saveSelection(doc) {
+            const sel = doc.getSelection();
+            if (sel.rangeCount > 0 && sel.toString().length > 0) {
+                try {
+                    return { range: sel.getRangeAt(0).cloneRange(), text: sel.toString() };
+                } catch(e) {}
+            }
+            return null;
+        }
+
+        function restoreSelection(doc, saved) {
+            if (!saved || !saved.range) return false;
+            try {
+                const sel = doc.getSelection();
+                sel.removeAllRanges();
+                sel.addRange(saved.range);
+                return true;
+            } catch (e) { return false; }
+        }
+
+        function setupTopDocument() {
+            document.addEventListener('selectionchange', function() {
+                const saved = saveSelection(document);
+                if (saved) selectionStore.top = saved;
+            });
+
+            document.addEventListener('mouseup', function(e) {
+                if (e.button === 0) {
+                    setTimeout(() => {
+                        const saved = saveSelection(document);
+                        if (saved) selectionStore.top = saved;
+                    }, 10);
+                }
+            }, true);
+
+            document.addEventListener('mousedown', function(e) {
+                if (e.button === 0) {
+                    setTimeout(() => {
+                        const saved = saveSelection(document);
+                        if (saved) selectionStore.top = saved;
+                    }, 10);
+                }
+            }, true);
+
+            document.addEventListener('contextmenu', function(e) {
+                if (selectionStore.top.text) {
+                    restoreSelection(document, selectionStore.top);
+                }
+            }, true);
+        }
+
+        function setupIframeEvents() {
+            const iframes = document.querySelectorAll('iframe');
+            iframes.forEach((frame, i) => {
+                try {
+                    const frameDoc = frame.contentDocument || frame.contentWindow.document;
+                    if (!selectionStore.iframes.has(i)) {
+                        selectionStore.iframes.set(i, { range: null, text: '' });
+                    }
+
+                    frameDoc.addEventListener('selectionchange', function() {
+                        const saved = saveSelection(frameDoc);
+                        if (saved) selectionStore.iframes.set(i, saved);
+                    });
+
+                    frameDoc.addEventListener('mouseup', function(e) {
+                        if (e.button === 0) {
+                            setTimeout(() => {
+                                const saved = saveSelection(frameDoc);
+                                if (saved) selectionStore.iframes.set(i, saved);
+                            }, 10);
+                        }
+                    }, true);
+
+                    frameDoc.addEventListener('mousedown', function(e) {
+                        if (e.button === 0) {
+                            setTimeout(() => {
+                                const saved = saveSelection(frameDoc);
+                                if (saved) selectionStore.iframes.set(i, saved);
+                            }, 10);
+                        }
+                    }, true);
+
+                    frameDoc.addEventListener('contextmenu', function(e) {
+                        const saved = selectionStore.iframes.get(i);
+                        if (saved && saved.text) {
+                            restoreSelection(frameDoc, saved);
+                        }
+                    }, true);
+
+                } catch(e) {}
+            });
+        }
+
+        function addCSS() {
+            const style = document.createElement('style');
+            style.id = 'remove-toolbar-style';
+            style.textContent = `
+                .toolbar, #toolbar-text, #translate-btn,
+                [class*="toolbar"][class*="absolute"],
+                [id*="toolbar"][class*="absolute"] {
+                    display: none !important;
+                    visibility: hidden !important;
+                    opacity: 0 !important;
+                    pointer-events: none !important;
+                }
+                body, #reader-content, .reader-content, [class*="reader"] {
+                    -webkit-user-select: text !important;
+                    -moz-user-select: text !important;
+                    -ms-user-select: text !important;
+                    user-select: text !important;
+                }
+            `;
+            const existing = document.getElementById('remove-toolbar-style');
+            if (existing) existing.remove();
+            document.head.appendChild(style);
+        }
+
+        removeAllToolbars();
+
+        const toolbarObserver = new MutationObserver(function() {
+            removeAllToolbars();
+        });
+        toolbarObserver.observe(document.body, { childList: true, subtree: true });
+
+        setupTopDocument();
+        setupIframeEvents();
+        addCSS();
+
+        const iframeObserver = new MutationObserver(function() {
+            setupIframeEvents();
+        });
+        iframeObserver.observe(document.body, { childList: true, subtree: true });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initRemoveToolbar);
+    } else {
+        initRemoveToolbar();
+    }
 
 })();
